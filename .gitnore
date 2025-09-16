@@ -1,1 +1,19 @@
+Dependencias de Node.js
+
 node_modules/ package-lock.json
+
+Archivos de entorno
+
+.env
+
+Archivos generados o temporales
+
+.log npm-debug.logyarn-debug.log* yarn-error.log*
+
+Archivos del sistema operativo
+
+.DS_Store Thumbs.db
+
+Archivos de editores o IDEs
+
+.vscode/ .idea/ *.suo .ntvs*.njsproj *.sln *.swp
