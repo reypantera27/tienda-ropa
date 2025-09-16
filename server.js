@@ -1,26 +1,27 @@
 // Backend para la tienda de ropa online usando Express.js y Node.js
 // Maneja productos, carrito (con sesiones) y pedidos
-// Requisitos: Instala Node.js, luego ejecuta 'npm init -y' y 'npm install express cors body-parser express-session'
+// Requisitos: Instala Node.js, luego ejecuta 'npm init -y' y 'npm install express cors body-parser express-session dotenv'
 
 // Importa módulos necesarios
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const session = require('express-session');
+require('dotenv').config(); // Carga variables de entorno desde .env en local
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000; // Usa puerto dinámico para Render o 3000 en local
 
 // Configura sesiones
 app.use(session({
-  secret: 'tu_secreto_super_seguro', // Cambia esto por una clave secreta única
+  secret: process.env.SESSION_SECRET || 'tu_secreto_super_seguro', // Usa variable de entorno
   resave: false,
   saveUninitialized: true,
-  cookie: { secure: false, maxAge: 24 * 60 * 60 * 1000 } // 24 horas
+  cookie: { secure: process.env.NODE_ENV === 'production', maxAge: 24 * 60 * 60 * 1000 } // secure: true en producción (HTTPS)
 }));
 
 // Middleware para habilitar CORS, parsear JSON y servir archivos estáticos
-app.use(cors({ origin: 'http://localhost:3000', credentials: true }));
+app.use(cors({ origin: true, credentials: true })); // Permite origen dinámico y cookies
 app.use(bodyParser.json());
 app.use(express.static('.')); // Sirve archivos de la carpeta raíz (HTML, CSS, JS, imágenes)
 
@@ -185,7 +186,7 @@ app.get('/', (req, res) => {
 
 // Inicia el servidor
 app.listen(PORT, () => {
-  console.log(`Servidor de la tienda de ropa online ejecutándose en http://localhost:${PORT}`);
+  console.log(`Servidor de la tienda de ropa online ejecutándose en puerto ${PORT}`);
 });
 
 // Manejo de errores 404 para rutas no encontradas
