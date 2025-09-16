@@ -14,10 +14,10 @@ const PORT = process.env.PORT || 3000; // Usa puerto dinámico para Render o 300
 
 // Configura sesiones
 app.use(session({
-  secret: process.env.SESSION_SECRET || '64e95816f6cda5ab552f97961940f5b6', // Usa variable de entorno
+  secret: process.env.SESSION_SECRET || 'tu_secreto_super_seguro',
   resave: false,
   saveUninitialized: true,
-  cookie: { secure: process.env.NODE_ENV === 'production', maxAge: 24 * 60 * 60 * 1000 } // secure: true en producción (HTTPS)
+  cookie: { secure: process.env.NODE_ENV === 'production', maxAge: 24 * 60 * 60 * 1000 }
 }));
 
 // Middleware para habilitar CORS, parsear JSON y servir archivos estáticos
