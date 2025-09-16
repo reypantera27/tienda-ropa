@@ -98,7 +98,7 @@ async function fetchProducts(type = "all", gender = "all", price = "all", search
     if (price !== "all") queryParams.append("price", price);
     if (search) queryParams.append("search", search);
 
-    const response = await fetch(`http://localhost:3000/api/products?${queryParams.toString()}`, {
+    const response = await fetch(`/api/products?${queryParams.toString()}`, {
       credentials: 'include'
     });
     if (!response.ok) {
@@ -115,7 +115,7 @@ async function fetchProducts(type = "all", gender = "all", price = "all", search
 // Obtiene el carrito desde la API
 async function fetchCart() {
   try {
-    const response = await fetch('http://localhost:3000/api/cart', {
+    const response = await fetch('/api/cart', {
       credentials: 'include'
     });
     if (!response.ok) {
@@ -199,7 +199,7 @@ function showToast(message) {
 // Añade un producto al carrito
 async function addToCart(productId) {
   try {
-    const response = await fetch('http://localhost:3000/api/cart/add', {
+    const response = await fetch('/api/cart/add', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ productId, quantity: 1 }),
@@ -226,7 +226,7 @@ async function updateQuantity(productId, delta) {
       throw new Error('Producto no encontrado en el carrito');
     }
     const newQuantity = cartItem.quantity + delta;
-    const response = await fetch('http://localhost:3000/api/cart/update', {
+    const response = await fetch('/api/cart/update', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ productId, quantity: newQuantity }),
@@ -248,7 +248,7 @@ async function updateQuantity(productId, delta) {
 // Elimina un producto del carrito
 async function removeFromCart(productId) {
   try {
-    const response = await fetch('http://localhost:3000/api/cart/remove', {
+    const response = await fetch('/api/cart/remove', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ productId }),
@@ -309,7 +309,7 @@ async function processCheckout() {
   const pago = document.getElementById("pago").value;
 
   try {
-    const response = await fetch('http://localhost:3000/api/orders', {
+    const response = await fetch('/api/orders', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ nombre, email, direccion, pago }),
@@ -320,7 +320,7 @@ async function processCheckout() {
       throw new Error(result.error || 'Error al procesar el pedido');
     }
 
-    cart = result.cart; // Actualizar carrito (vacío tras el pedido)
+    cart = result.cart;
     updateCart();
     showToast(`Compra confirmada, ${nombre}!`);
     checkoutForm.style.display = "none";
@@ -338,7 +338,7 @@ async function processCheckout() {
 cartLink.addEventListener("click", (e) => {
   e.preventDefault();
   cartModal.style.display = "block";
-  fetchCart(); // Cargar carrito al abrir el modal
+  fetchCart();
 });
 
 // Cierra el modal del carrito al hacer clic en la X
