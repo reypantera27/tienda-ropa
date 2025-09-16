@@ -1,12 +1,12 @@
 // Backend para la tienda de ropa online usando Express.js y Node.js
 // Maneja productos, carrito (con sesiones) y pedidos
-// Requisitos: Instala Node.js, luego ejecuta 'npm init -y' y 'npm install express cors body-parser express-session dotenv'
+// Requisitos: Instala Node.js, luego ejecuta 'npm init -y' y 'npm install express cors body-parser express-session dotenv session-file-store'
 
-// Importa módulos necesarios
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const session = require('express-session');
+const FileStore = require('session-file-store')(session);
 require('dotenv').config(); // Carga variables de entorno desde .env en local
 
 const app = express();
@@ -15,12 +15,21 @@ const PORT = process.env.PORT || 3000; // Usa puerto dinámico para Render o 300
 // Verifica SESSION_SECRET
 console.log('SESSION_SECRET:', process.env.SESSION_SECRET || 'No definido');
 
-// Configura sesiones
+// Configura sesiones con almacenamiento persistente
 app.use(session({
+  store: new FileStore({
+    path: './sessions',      // carpeta donde guarda sesiones
+    ttl: 24 * 60 * 60        // duración (1 día) en segundos
+  }),
   secret: process.env.SESSION_SECRET || 'fallback-secret-12345', // Valor por defecto solo para local
   resave: false,
-  saveUninitialized: true,
-  cookie: { secure: process.env.NODE_ENV === 'production', maxAge: 24 * 60 * 60 * 1000 } // secure: true en producción (HTTPS)
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production', // true en producción (HTTPS en Render)
+    httpOnly: true,
+    sameSite: 'lax',
+    maxAge: 24 * 60 * 60 * 1000 // 1 día
+  }
 }));
 
 // Middleware para habilitar CORS, parsear JSON y servir archivos estáticos
@@ -90,12 +99,11 @@ app.get('/api/cart', (req, res) => {
 });
 
 // Ruta para agregar un producto al carrito
-app.post('/api/cart/add', async (req, res) => {
+app.post('/api/cart/add', (req, res) => {
   const { productId, quantity = 1 } = req.body;
   console.log('POST /api/cart/add - Entrada:', { productId, quantity });
   const product = products.find(p => p.id === parseInt(productId));
   if (!product) {
-    console.log('POST /api/cart/add - Producto no encontrado:', productId);
     return res.status(404).json({ error: 'Producto no encontrado' });
   }
 
@@ -113,11 +121,9 @@ app.post('/api/cart/add', async (req, res) => {
 // Ruta para actualizar la cantidad de un producto en el carrito
 app.post('/api/cart/update', (req, res) => {
   const { productId, quantity } = req.body;
-  console.log('POST /api/cart/update - Entrada:', { productId, quantity });
   req.session.cart = req.session.cart || [];
   const cartItem = req.session.cart.find(item => item.id === parseInt(productId));
   if (!cartItem) {
-    console.log('POST /api/cart/update - Producto no encontrado:', productId);
     return res.status(404).json({ error: 'Producto no encontrado en el carrito' });
   }
 
@@ -126,23 +132,19 @@ app.post('/api/cart/update', (req, res) => {
   } else {
     cartItem.quantity = parseInt(quantity);
   }
-  console.log('POST /api/cart/update - Carrito actualizado:', req.session.cart);
   res.json({ success: true, message: 'Carrito actualizado', cart: req.session.cart });
 });
 
 // Ruta para eliminar un producto del carrito
 app.post('/api/cart/remove', (req, res) => {
   const { productId } = req.body;
-  console.log('POST /api/cart/remove - Entrada:', { productId });
   req.session.cart = req.session.cart || [];
   const cartLengthBefore = req.session.cart.length;
   req.session.cart = req.session.cart.filter(item => item.id !== parseInt(productId));
 
   if (req.session.cart.length < cartLengthBefore) {
-    console.log('POST /api/cart/remove - Carrito actualizado:', req.session.cart);
     res.json({ success: true, message: 'Producto eliminado del carrito', cart: req.session.cart });
   } else {
-    console.log('POST /api/cart/remove - Producto no encontrado:', productId);
     res.status(404).json({ error: 'Producto no encontrado en el carrito' });
   }
 });
@@ -150,15 +152,12 @@ app.post('/api/cart/remove', (req, res) => {
 // Ruta para procesar un pedido
 app.post('/api/orders', (req, res) => {
   const { nombre, email, direccion, pago } = req.body;
-  console.log('POST /api/orders - Entrada:', { nombre, email, direccion, pago });
   if (!nombre || !email || !direccion) {
-    console.log('POST /api/orders - Datos incompletos');
     return res.status(400).json({ error: 'Datos de usuario requeridos' });
   }
 
   const cart = req.session.cart || [];
   if (cart.length === 0) {
-    console.log('POST /api/orders - Carrito vacío');
     return res.status(400).json({ error: 'El carrito está vacío' });
   }
 
@@ -175,13 +174,11 @@ app.post('/api/orders', (req, res) => {
 
   orders.push(order);
   req.session.cart = []; // Vaciar el carrito tras el pedido
-  console.log('POST /api/orders - Pedido creado:', order);
   res.json({ success: true, orderId: order.id, message: 'Pedido procesado exitosamente', cart: req.session.cart });
 });
 
 // Ruta para obtener los pedidos
 app.get('/api/orders', (req, res) => {
-  console.log('GET /api/orders - Pedidos:', orders);
   res.json(orders);
 });
 
@@ -189,10 +186,8 @@ app.get('/api/orders', (req, res) => {
 app.get('/api/orders/:id', (req, res) => {
   const order = orders.find(o => o.id === parseInt(req.params.id));
   if (order) {
-    console.log('GET /api/orders/:id - Pedido encontrado:', order);
     res.json(order);
   } else {
-    console.log('GET /api/orders/:id - Pedido no encontrado:', req.params.id);
     res.status(404).json({ error: 'Pedido no encontrado' });
   }
 });
